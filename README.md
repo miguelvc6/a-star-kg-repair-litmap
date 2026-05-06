@@ -34,6 +34,8 @@ Outputs are written under `data/`:
 - `data/final/relevant_papers.bib`
 - `data/final/reading_list.md`
 
+Command logs are written under `logs/` with timestamped filenames such as `20260506_153000_run-all.log`.
+
 ## Tests
 
 ```bash
