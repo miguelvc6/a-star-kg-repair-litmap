@@ -30,24 +30,24 @@ core = [
 ]
 
 [venues.dblp_sources]
-KR = "https://dblp.org/db/conf/kr/kr{year}.xml"
-AAAI = "https://dblp.org/db/conf/aaai/aaai{year}.xml"
-IJCAI = "https://dblp.org/db/conf/ijcai/ijcai{year}.xml"
-NeurIPS = "https://dblp.org/db/conf/nips/nips{year}.xml"
-ICLR = "https://dblp.org/db/conf/iclr/iclr{year}.xml"
-ICML = "https://dblp.org/db/conf/icml/icml{year}.xml"
-KDD = "https://dblp.org/db/conf/kdd/kdd{year}.xml"
-WWW = "https://dblp.org/db/conf/www/www{year}.xml"
-SIGMOD = "https://dblp.org/db/conf/sigmod/sigmod{year}.xml"
-VLDB = "https://dblp.org/db/conf/vldb/vldb{year}.xml"
-PODS = "https://dblp.org/db/conf/pods/pods{year}.xml"
-ICDE = "https://dblp.org/db/conf/icde/icde{year}.xml"
+KR = "https://dblp.org/db/conf/kr/kr{year}.html"
+AAAI = "https://dblp.org/db/conf/aaai/aaai{year}.html"
+IJCAI = "https://dblp.org/db/conf/ijcai/ijcai{year}.html"
+NeurIPS = "https://dblp.org/db/conf/nips/nips{year}.html"
+ICLR = "https://dblp.org/db/conf/iclr/iclr{year}.html"
+ICML = "https://dblp.org/db/conf/icml/icml{year}.html"
+KDD = "https://dblp.org/db/conf/kdd/kdd{year}.html"
+WWW = "https://dblp.org/db/conf/www/www{year}.html"
+SIGMOD = "https://dblp.org/db/conf/sigmod/sigmod{year}.html"
+VLDB = "https://dblp.org/db/conf/vldb/vldb{year}.html"
+PODS = "https://dblp.org/db/conf/pods/pods{year}.html"
+ICDE = "https://dblp.org/db/conf/icde/icde{year}.html"
 
 [venues.dblp_overrides.VLDB]
-2023 = "https://dblp.org/db/journals/pvldb/pvldb16.xml"
-2024 = "https://dblp.org/db/journals/pvldb/pvldb17.xml"
-2025 = "https://dblp.org/db/journals/pvldb/pvldb18.xml"
-2026 = "https://dblp.org/db/journals/pvldb/pvldb19.xml"
+2023 = "https://dblp.org/db/journals/pvldb/pvldb16.html"
+2024 = "https://dblp.org/db/journals/pvldb/pvldb17.html"
+2025 = "https://dblp.org/db/journals/pvldb/pvldb18.html"
+2026 = "https://dblp.org/db/journals/pvldb/pvldb19.html"
 
 [scoring]
 min_relevance_score = 5
@@ -174,8 +174,11 @@ keywords = [
 "Database foundations of repair and consistency" = ["data_quality", "repair"]
 
 [rate_limits]
-dblp_sleep_seconds = 0.2
+dblp_sleep_seconds = 2.0
+dblp_retries = 3
+dblp_backoff_seconds = 5.0
 semantic_scholar_sleep_seconds = 1.0
 openalex_sleep_seconds = 0.2
 crossref_sleep_seconds = 0.2
 request_timeout_seconds = 30
+user_agent = "a-star-kg-repair-litmap/0.1 (academic metadata harvester; polite DBLP requests)"

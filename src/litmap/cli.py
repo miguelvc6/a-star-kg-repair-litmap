@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
 
 from litmap.config import load_project_config, load_secrets, resolve_project_path
@@ -8,12 +9,17 @@ from litmap.dblp import harvest_dblp
 from litmap.enrich import enrich_records
 from litmap.export import export_outputs
 from litmap.io import read_jsonl, write_jsonl
+from litmap.logging_config import configure_logging
 from litmap.scoring import score_records
+
+
+logger = logging.getLogger(__name__)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    configure_logging(args.command)
     config = load_project_config(args.config)
     config = _resolve_paths(config)
 
@@ -49,7 +55,7 @@ def command_harvest(config: dict, args: argparse.Namespace) -> int:
     records = harvest_dblp(config, limit=args.limit)
     path = Path(config["paths"]["raw_dblp_jsonl"])
     count = write_jsonl(path, records)
-    print(f"[harvest] wrote {count} records to {path}")
+    logger.info("[harvest] wrote %s records to %s", count, path)
     return 0
 
 
@@ -59,7 +65,7 @@ def command_enrich(config: dict, args: argparse.Namespace) -> int:
     records = read_jsonl(input_path)
     enriched = enrich_records(records, config, load_secrets(), limit=args.limit)
     count = write_jsonl(output_path, enriched)
-    print(f"[enrich] wrote {count} records to {output_path}")
+    logger.info("[enrich] wrote %s records to %s", count, output_path)
     return 0
 
 
@@ -71,7 +77,7 @@ def command_score(config: dict, args: argparse.Namespace) -> int:
         records = records[: args.limit]
     scored = score_records(records, config)
     count = write_jsonl(output_path, scored)
-    print(f"[score] wrote {count} records to {output_path}")
+    logger.info("[score] wrote %s records to %s", count, output_path)
     return 0
 
 
@@ -82,7 +88,7 @@ def command_export(config: dict, args: argparse.Namespace) -> int:
         records = records[: args.limit]
     counts = export_outputs(records, config)
     for name, count in counts.items():
-        print(f"[export] {name}: {count} records")
+        logger.info("[export] %s: %s records", name, count)
     return 0
 
 

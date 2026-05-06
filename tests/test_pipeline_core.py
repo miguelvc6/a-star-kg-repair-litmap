@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from litmap.config import load_project_config
-from litmap.dblp import parse_dblp_xml
+from litmap.dblp import parse_dblp_html, parse_dblp_xml
 from litmap.dedupe import deduplicate
 from litmap.enrich import reconstruct_openalex_abstract
 from litmap.export import escape_bibtex, to_bibtex
@@ -30,6 +30,27 @@ DBLP_XML = """<?xml version="1.0" encoding="UTF-8"?>
 </dblp>
 """
 
+DBLP_HTML = """
+<html>
+  <body>
+    <ul class="publ-list">
+      <li class="entry inproceedings" id="conf/kr/BienvenuB23">
+        <cite class="data tts-content">
+          <span itemprop="author"><a><span itemprop="name">Meghyn Bienvenu</span></a></span>,
+          <span itemprop="author"><a><span itemprop="name">Camille Bourgaux</span></a></span>:
+          <span class="title" itemprop="name">Inconsistency Handling in Prioritized Databases with Universal Constraints.</span>
+          <meta itemprop="datePublished" content="2023"/>
+        </cite>
+        <nav>
+          <a href="https://doi.org/10.24963/kr.2023/10">electronic edition via DOI</a>
+          <a href="https://dblp.org/rec/conf/kr/BienvenuB23">persistent URL</a>
+        </nav>
+      </li>
+    </ul>
+  </body>
+</html>
+"""
+
 
 class PipelineCoreTests(unittest.TestCase):
     def test_load_project_config(self) -> None:
@@ -46,6 +67,19 @@ class PipelineCoreTests(unittest.TestCase):
         self.assertEqual(records[0]["authors"], ["Jane Smith", "Max Müller"])
         self.assertEqual(records[0]["year"], 2025)
         self.assertEqual(records[0]["doi"], "10.1145/example")
+
+    def test_parse_dblp_html_toc_normalizes_records(self) -> None:
+        records = parse_dblp_html(DBLP_HTML, "KR", "https://dblp.org/db/conf/kr/kr2023.html", 2023)
+
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["dblp_key"], "conf/kr/BienvenuB23")
+        self.assertEqual(records[0]["authors"], ["Meghyn Bienvenu", "Camille Bourgaux"])
+        self.assertEqual(records[0]["year"], 2023)
+        self.assertEqual(records[0]["doi"], "10.24963/kr.2023/10")
+        self.assertEqual(
+            records[0]["title"],
+            "Inconsistency Handling in Prioritized Databases with Universal Constraints.",
+        )
 
     def test_reconstruct_openalex_abstract(self) -> None:
         index = {"Knowledge": [0], "graphs": [1], "repair": [2], "matter": [3]}

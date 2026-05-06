@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from typing import Any
 from urllib.parse import quote
@@ -26,6 +27,7 @@ S2_FIELDS = ",".join(
         "url",
     ]
 )
+logger = logging.getLogger(__name__)
 
 
 def enrich_records(
@@ -55,7 +57,7 @@ def enrich_records(
 
         merged["metadata_sources"] = [source for source in ["dblp", "semantic_scholar" if s2 else None, "openalex" if oa else None] if source]
         enriched.append(merged)
-        print(f"[enrich] {index}/{len(records[:limit] if limit else records)} {record.get('title', '')[:80]}")
+        logger.info("[enrich] %s/%s %s", index, len(records[:limit] if limit else records), record.get("title", "")[:80])
     return enriched
 
 
@@ -75,7 +77,7 @@ def fetch_semantic_scholar(
             if response.status_code == 200:
                 return response.json()
             if response.status_code not in {404, 429}:
-                print(f"[enrich] Semantic Scholar DOI lookup HTTP {response.status_code}: {doi}")
+                logger.warning("[enrich] Semantic Scholar DOI lookup HTTP %s: %s", response.status_code, doi)
 
         title = record.get("title")
         if not title:
@@ -89,9 +91,9 @@ def fetch_semantic_scholar(
         if response.status_code == 200:
             data = response.json().get("data", [])
             return data[0] if data else None
-        print(f"[enrich] Semantic Scholar title lookup HTTP {response.status_code}: {title[:80]}")
+        logger.warning("[enrich] Semantic Scholar title lookup HTTP %s: %s", response.status_code, title[:80])
     except requests.RequestException as exc:
-        print(f"[enrich] Semantic Scholar failed: {exc}")
+        logger.warning("[enrich] Semantic Scholar failed: %s", exc)
     return None
 
 
@@ -116,7 +118,7 @@ def fetch_openalex(
             if response.status_code == 200:
                 return response.json()
             if response.status_code not in {404, 429}:
-                print(f"[enrich] OpenAlex DOI lookup HTTP {response.status_code}: {doi}")
+                logger.warning("[enrich] OpenAlex DOI lookup HTTP %s: %s", response.status_code, doi)
 
         title = record.get("title")
         if not title:
@@ -127,9 +129,9 @@ def fetch_openalex(
         if response.status_code == 200:
             results = response.json().get("results", [])
             return results[0] if results else None
-        print(f"[enrich] OpenAlex title lookup HTTP {response.status_code}: {title[:80]}")
+        logger.warning("[enrich] OpenAlex title lookup HTTP %s: %s", response.status_code, title[:80])
     except requests.RequestException as exc:
-        print(f"[enrich] OpenAlex failed: {exc}")
+        logger.warning("[enrich] OpenAlex failed: %s", exc)
     return None
 
 
