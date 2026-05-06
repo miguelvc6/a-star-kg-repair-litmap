@@ -1,0 +1,29 @@
+﻿[project]
+name = "a_star_literature_map"
+start_year = 2023
+end_year = 2026
+
+[venues]
+core = [
+  "KR",
+  "AAAI",
+  "IJCAI",
+  "NeurIPS",
+  "ICLR",
+  "ICML",
+  "KDD",
+  "WWW",
+  "SIGMOD",
+  "VLDB",
+  "PODS",
+  "ICDE"
+]
+
+[scoring]
+min_relevance_score = 5
+must_read_score = 11
+
+[rate_limits]
+semantic_scholar_sleep_seconds = 1.0
+openalex_sleep_seconds = 0.2
+crossref_sleep_seconds = 0.2
