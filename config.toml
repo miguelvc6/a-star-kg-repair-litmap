@@ -1,7 +1,17 @@
-﻿[project]
+[project]
 name = "a_star_literature_map"
 start_year = 2023
 end_year = 2026
+years = [2023, 2024, 2025, 2026]
+
+[paths]
+raw_dblp_jsonl = "data/raw/dblp_core_a_star_2023_2026.jsonl"
+enriched_jsonl = "data/enriched/papers_enriched.jsonl"
+scored_jsonl = "data/scored/papers_scored.jsonl"
+full_scored_csv = "data/scored/papers_scored.csv"
+shortlist_csv = "data/final/relevant_papers.csv"
+bibtex = "data/final/relevant_papers.bib"
+reading_list_md = "data/final/reading_list.md"
 
 [venues]
 core = [
@@ -16,14 +26,156 @@ core = [
   "SIGMOD",
   "VLDB",
   "PODS",
-  "ICDE"
+  "ICDE",
 ]
+
+[venues.dblp_sources]
+KR = "https://dblp.org/db/conf/kr/kr{year}.xml"
+AAAI = "https://dblp.org/db/conf/aaai/aaai{year}.xml"
+IJCAI = "https://dblp.org/db/conf/ijcai/ijcai{year}.xml"
+NeurIPS = "https://dblp.org/db/conf/nips/nips{year}.xml"
+ICLR = "https://dblp.org/db/conf/iclr/iclr{year}.xml"
+ICML = "https://dblp.org/db/conf/icml/icml{year}.xml"
+KDD = "https://dblp.org/db/conf/kdd/kdd{year}.xml"
+WWW = "https://dblp.org/db/conf/www/www{year}.xml"
+SIGMOD = "https://dblp.org/db/conf/sigmod/sigmod{year}.xml"
+VLDB = "https://dblp.org/db/conf/vldb/vldb{year}.xml"
+PODS = "https://dblp.org/db/conf/pods/pods{year}.xml"
+ICDE = "https://dblp.org/db/conf/icde/icde{year}.xml"
+
+[venues.dblp_overrides.VLDB]
+2023 = "https://dblp.org/db/journals/pvldb/pvldb16.xml"
+2024 = "https://dblp.org/db/journals/pvldb/pvldb17.xml"
+2025 = "https://dblp.org/db/journals/pvldb/pvldb18.xml"
+2026 = "https://dblp.org/db/journals/pvldb/pvldb19.xml"
 
 [scoring]
 min_relevance_score = 5
+likely_useful_score = 8
 must_read_score = 11
+max_negative_penalty = 3
+negative_keywords = [
+  "image classification",
+  "object detection",
+  "robotics",
+  "hardware",
+  "networking",
+  "cryptography",
+  "recommender system",
+  "recommendation system",
+  "pure NLP",
+]
+
+[scoring.weights]
+kg = 3
+repair = 3
+neurosymbolic = 2
+graph_ml = 2
+llm_agent = 2
+data_quality = 2
+benchmark = 2
+
+[scoring.axes.kg]
+label = "KG / RDF / Wikidata relevance"
+keywords = [
+  "knowledge graph",
+  "wikidata",
+  "rdf",
+  "semantic web",
+  "ontology",
+  "kg completion",
+  "kg embedding",
+  "linked data",
+]
+
+[scoring.axes.repair]
+label = "Repair / constraint / validation relevance"
+keywords = [
+  "data repair",
+  "knowledge graph repair",
+  "constraint violation",
+  "constraints",
+  "integrity constraints",
+  "consistency",
+  "validation",
+  "symbolic checking",
+  "shacl",
+  "belief revision",
+]
+
+[scoring.axes.neurosymbolic]
+label = "Neuro-symbolic relevance"
+keywords = [
+  "neuro-symbolic",
+  "neurosymbolic",
+  "symbolic reasoning",
+  "differentiable reasoning",
+  "logic neural",
+  "verifier-guided",
+  "logic-guided",
+]
+
+[scoring.axes.graph_ml]
+label = "Graph ML relevance"
+keywords = [
+  "graph neural network",
+  "gnn",
+  "message passing",
+  "graph representation learning",
+  "kg embedding",
+  "graph foundation model",
+  "graph transformer",
+]
+
+[scoring.axes.llm_agent]
+label = "LLM-agent relevance"
+keywords = [
+  "llm agent",
+  "large language model",
+  "tool use",
+  "tool-augmented",
+  "retrieval-augmented",
+  "rag",
+  "fact verification",
+  "kg reasoning",
+  "data editing",
+]
+
+[scoring.axes.data_quality]
+label = "Database/data quality relevance"
+keywords = [
+  "data quality",
+  "data cleaning",
+  "entity resolution",
+  "provenance",
+  "inconsistency management",
+  "database constraints",
+  "dirty data",
+]
+
+[scoring.axes.benchmark]
+label = "Benchmark/evaluation relevance"
+keywords = [
+  "benchmark",
+  "evaluation",
+  "edit history",
+  "temporal evaluation",
+  "symbolic metrics",
+  "real-world kg",
+  "dataset construction",
+]
+
+[categories]
+"KG repair / data repair / constraints" = ["kg", "repair", "data_quality"]
+"GNNs and KG representation learning" = ["kg", "graph_ml"]
+"Neuro-symbolic and verifier-guided learning" = ["neurosymbolic", "repair"]
+"LLMs for KG reasoning and editing" = ["llm_agent", "kg"]
+"Benchmarks and evaluation methodology" = ["benchmark"]
+"Database foundations of repair and consistency" = ["data_quality", "repair"]
 
 [rate_limits]
+dblp_sleep_seconds = 0.2
 semantic_scholar_sleep_seconds = 1.0
 openalex_sleep_seconds = 0.2
 crossref_sleep_seconds = 0.2
+request_timeout_seconds = 30

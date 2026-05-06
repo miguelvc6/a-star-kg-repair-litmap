@@ -1,6 +1,5 @@
-def main():
-    print("Hello from a-star-kg-repair-litmap!")
+from litmap.cli import main
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
