@@ -25,3 +25,10 @@ dependencies = [
     "sentence-transformers>=5.4.1",
     "tqdm>=4.67.3",
 ]
+
+[project.scripts]
+litmap = "litmap.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
