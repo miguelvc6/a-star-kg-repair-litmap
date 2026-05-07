@@ -12,6 +12,9 @@ full_scored_csv = "data/scored/papers_scored.csv"
 shortlist_csv = "data/final/relevant_papers.csv"
 bibtex = "data/final/relevant_papers.bib"
 reading_list_md = "data/final/reading_list.md"
+core_shortlist_csv = "data/final/core_relevant_papers.csv"
+core_bibtex = "data/final/core_relevant_papers.bib"
+core_reading_list_md = "data/final/core_reading_list.md"
 
 [venues]
 core = [
@@ -33,7 +36,7 @@ core = [
 KR = "https://dblp.org/db/conf/kr/kr{year}.html"
 AAAI = "https://dblp.org/db/conf/aaai/aaai{year}.html"
 IJCAI = "https://dblp.org/db/conf/ijcai/ijcai{year}.html"
-NeurIPS = "https://dblp.org/db/conf/nips/nips{year}.html"
+NeurIPS = "https://dblp.org/db/conf/nips/neurips{year}.html"
 ICLR = "https://dblp.org/db/conf/iclr/iclr{year}.html"
 ICML = "https://dblp.org/db/conf/icml/icml{year}.html"
 KDD = "https://dblp.org/db/conf/kdd/kdd{year}.html"
@@ -49,7 +52,30 @@ ICDE = "https://dblp.org/db/conf/icde/icde{year}.html"
 2025 = "https://dblp.org/db/journals/pvldb/pvldb18.html"
 2026 = "https://dblp.org/db/journals/pvldb/pvldb19.html"
 
+[venues.dblp_overrides.KDD]
+2025 = [
+  "https://dblp.org/db/conf/kdd/kdd2025-1.html",
+  "https://dblp.org/db/conf/kdd/kdd2025-2.html",
+]
+2026 = "https://dblp.org/db/conf/kdd/kdd2026-1.html"
+
+[venues.dblp_overrides.SIGMOD]
+2023 = [
+  "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+  "https://dblp.org/db/conf/sigmod/sigmod2023c.html",
+]
+2024 = [
+  "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+  "https://dblp.org/db/journals/pacmmod/pacmmod2.html",
+  "https://dblp.org/db/conf/sigmod/sigmod2024c.html",
+]
+2025 = [
+  "https://dblp.org/db/journals/pacmmod/pacmmod2.html",
+  "https://dblp.org/db/journals/pacmmod/pacmmod3.html",
+]
+
 [scoring]
+core_limit = 200
 min_relevance_score = 5
 likely_useful_score = 8
 must_read_score = 11
@@ -172,6 +198,9 @@ keywords = [
 "LLMs for KG reasoning and editing" = ["llm_agent", "kg"]
 "Benchmarks and evaluation methodology" = ["benchmark"]
 "Database foundations of repair and consistency" = ["data_quality", "repair"]
+
+[metadata_sources]
+semantic_scholar_allow_unauthenticated = false
 
 [rate_limits]
 dblp_sleep_seconds = 2.0

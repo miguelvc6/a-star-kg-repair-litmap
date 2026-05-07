@@ -2,7 +2,14 @@
 .venv/*.env
 .env.*
 !.env.example
-data/
+data/*
+!data/final/
+!data/final/core_reading_list.md
+!data/final/core_relevant_papers.csv
+!data/final/core_relevant_papers.bib
+!data/final/reading_list.md
+!data/final/relevant_papers.csv
+!data/final/relevant_papers.bib
 logs/
 __pycache__/
 .pytest_cache/

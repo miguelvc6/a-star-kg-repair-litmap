@@ -18,19 +18,19 @@ DEFAULT_USER_AGENT = "a-star-kg-repair-litmap/0.1 (academic metadata harvester; 
 logger = logging.getLogger(__name__)
 
 
-def source_url_for(config: dict[str, Any], venue: str, year: int) -> str | None:
+def source_url_for(config: dict[str, Any], venue: str, year: int) -> list[str]:
     overrides = config.get("venues", {}).get("dblp_overrides", {})
     venue_overrides = overrides.get(venue, {})
     if str(year) in venue_overrides:
-        return venue_overrides[str(year)]
+        return _source_urls(venue_overrides[str(year)])
     if year in venue_overrides:
-        return venue_overrides[year]
+        return _source_urls(venue_overrides[year])
 
     templates = config.get("venues", {}).get("dblp_sources", {})
     template = templates.get(venue)
     if not template:
-        return None
-    return str(template).format(year=year)
+        return []
+    return [str(template).format(year=year)]
 
 
 def parse_dblp_xml(xml_text: str, venue: str, source_url: str) -> list[dict[str, Any]]:
@@ -104,37 +104,50 @@ def harvest_dblp(config: dict[str, Any], *, limit: int | None = None) -> list[di
     records: list[dict[str, Any]] = []
     for venue in venues:
         for year in years:
-            url = source_url_for(config, venue, year)
-            if not url:
+            urls = source_url_for(config, venue, year)
+            if not urls:
                 logger.warning("[harvest] no DBLP URL configured for %s %s; skipping", venue, year)
                 continue
-            response = _fetch_with_retries(
-                url,
-                headers=headers,
-                timeout=timeout,
-                retries=retries,
-                backoff_seconds=backoff_seconds,
-                label=f"{venue} {year}",
-            )
-            if response is None:
-                continue
-            if response.status_code == 404:
+            parsed_for_year: list[dict[str, Any]] = []
+            available = False
+            for url in urls:
+                response = _fetch_with_retries(
+                    url,
+                    headers=headers,
+                    timeout=timeout,
+                    retries=retries,
+                    backoff_seconds=backoff_seconds,
+                    label=f"{venue} {year}",
+                )
+                if response is None:
+                    continue
+                if response.status_code == 404:
+                    continue
+                available = True
+                if response.status_code >= 400:
+                    logger.warning("[harvest] %s %s HTTP %s; skipping %s", venue, year, response.status_code, url)
+                    continue
+                try:
+                    parsed = parse_dblp_response(response.text, venue, url, year)
+                except ET.ParseError as exc:
+                    logger.warning("[harvest] %s %s parse failed: %s", venue, year, exc)
+                    continue
+                parsed_for_year.extend(record for record in parsed if record.get("year") in {None, year})
+                time.sleep(sleep_seconds)
+            if not available:
                 logger.info("[harvest] %s %s not available on DBLP yet; skipping", venue, year)
                 continue
-            if response.status_code >= 400:
-                logger.warning("[harvest] %s %s HTTP %s; skipping", venue, year, response.status_code)
-                continue
-            try:
-                parsed = parse_dblp_response(response.text, venue, url, year)
-            except ET.ParseError as exc:
-                logger.warning("[harvest] %s %s parse failed: %s", venue, year, exc)
-                continue
-            records.extend(parsed)
-            logger.info("[harvest] %s %s: %s records", venue, year, len(parsed))
+            records.extend(parsed_for_year)
+            logger.info("[harvest] %s %s: %s records", venue, year, len(parsed_for_year))
             if limit and len(records) >= limit:
                 return deduplicate(records[:limit])
-            time.sleep(sleep_seconds)
     return deduplicate(records)
+
+
+def _source_urls(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    return [str(value)]
 
 
 def parse_dblp_response(text: str, venue: str, source_url: str, year: int | None = None) -> list[dict[str, Any]]:

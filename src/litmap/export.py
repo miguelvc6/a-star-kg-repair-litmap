@@ -84,14 +84,33 @@ def write_markdown_reading_list(path: Path, records: list[dict[str, Any]], confi
     return len(records)
 
 
+def top_scored_records(records: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
+    ranked = sorted(
+        records,
+        key=lambda r: (
+            -int(r.get("total_score", 0)),
+            -int(r.get("citation_count") or 0),
+            -(int(r.get("year")) if r.get("year") else 0),
+            r.get("title") or "",
+        ),
+    )
+    return ranked[:limit]
+
+
 def export_outputs(records: list[dict[str, Any]], config: dict[str, Any]) -> dict[str, int]:
     paths = config.get("paths", {})
+    scoring = config.get("scoring", {})
     shortlist = [record for record in records if record.get("priority") != "Reject"]
+    core_limit = int(scoring.get("core_limit", 200))
+    core_shortlist = top_scored_records(shortlist, core_limit)
     counts = {
         "full_csv": write_csv(Path(paths["full_scored_csv"]), records),
         "shortlist_csv": write_csv(Path(paths["shortlist_csv"]), shortlist),
         "bibtex": write_bibtex(Path(paths["bibtex"]), shortlist),
         "reading_list": write_markdown_reading_list(Path(paths["reading_list_md"]), shortlist, config),
+        "core_shortlist_csv": write_csv(Path(paths["core_shortlist_csv"]), core_shortlist),
+        "core_bibtex": write_bibtex(Path(paths["core_bibtex"]), core_shortlist),
+        "core_reading_list": write_markdown_reading_list(Path(paths["core_reading_list_md"]), core_shortlist, config),
     }
     return counts
 

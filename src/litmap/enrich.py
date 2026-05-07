@@ -42,13 +42,28 @@ def enrich_records(
     timeout = float(config.get("rate_limits", {}).get("request_timeout_seconds", 30))
     session = requests.Session()
     enriched: list[dict[str, Any]] = []
+    semantic_scholar_disabled = not _semantic_scholar_enabled(config, secrets)
+    if semantic_scholar_disabled:
+        logger.info(
+            "[enrich] Semantic Scholar disabled because SEMANTIC_SCHOLAR_API_KEY is not set. "
+            "Set metadata_sources.semantic_scholar_allow_unauthenticated=true to opt into shared unauthenticated access."
+        )
 
     for index, record in enumerate(records[:limit] if limit else records, start=1):
         merged = dict(record)
-        s2 = fetch_semantic_scholar(session, record, secrets, timeout=timeout)
-        if s2:
-            merged.update(_semantic_scholar_fields(s2))
-        time.sleep(sleep_s2)
+        s2 = None
+        if not semantic_scholar_disabled:
+            s2, s2_status = fetch_semantic_scholar(session, record, secrets, timeout=timeout)
+            if s2_status in {403, 429}:
+                semantic_scholar_disabled = True
+                logger.warning(
+                    "[enrich] Semantic Scholar returned HTTP %s; disabling Semantic Scholar lookups for this run. "
+                    "Check SEMANTIC_SCHOLAR_API_KEY, rate limits, or network access.",
+                    s2_status,
+                )
+            if s2:
+                merged.update(_semantic_scholar_fields(s2))
+            time.sleep(sleep_s2)
 
         oa = fetch_openalex(session, record, secrets, timeout=timeout)
         if oa:
@@ -61,13 +76,19 @@ def enrich_records(
     return enriched
 
 
+def _semantic_scholar_enabled(config: dict[str, Any], secrets: Secrets) -> bool:
+    if secrets.semantic_scholar_api_key:
+        return True
+    return bool(config.get("metadata_sources", {}).get("semantic_scholar_allow_unauthenticated", False))
+
+
 def fetch_semantic_scholar(
     session: requests.Session,
     record: dict[str, Any],
     secrets: Secrets,
     *,
     timeout: float,
-) -> dict[str, Any] | None:
+) -> tuple[dict[str, Any] | None, int | None]:
     headers = {"x-api-key": secrets.semantic_scholar_api_key} if secrets.semantic_scholar_api_key else {}
     doi = normalize_doi(record.get("doi"))
     try:
@@ -75,13 +96,15 @@ def fetch_semantic_scholar(
             url = f"https://api.semanticscholar.org/graph/v1/paper/DOI:{quote(doi, safe='')}"
             response = session.get(url, params={"fields": S2_FIELDS}, headers=headers, timeout=timeout)
             if response.status_code == 200:
-                return response.json()
+                return response.json(), response.status_code
+            if response.status_code in {403, 429}:
+                return None, response.status_code
             if response.status_code not in {404, 429}:
                 logger.warning("[enrich] Semantic Scholar DOI lookup HTTP %s: %s", response.status_code, doi)
 
         title = record.get("title")
         if not title:
-            return None
+            return None, None
         response = session.get(
             "https://api.semanticscholar.org/graph/v1/paper/search",
             params={"query": title, "limit": 1, "fields": S2_FIELDS},
@@ -90,11 +113,13 @@ def fetch_semantic_scholar(
         )
         if response.status_code == 200:
             data = response.json().get("data", [])
-            return data[0] if data else None
+            return (data[0] if data else None), response.status_code
+        if response.status_code in {403, 429}:
+            return None, response.status_code
         logger.warning("[enrich] Semantic Scholar title lookup HTTP %s: %s", response.status_code, title[:80])
     except requests.RequestException as exc:
         logger.warning("[enrich] Semantic Scholar failed: %s", exc)
-    return None
+    return None, None
 
 
 def fetch_openalex(
